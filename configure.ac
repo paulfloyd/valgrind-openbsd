@@ -557,6 +557,7 @@ case "${host_os}" in
      *openbsd*)
         AC_MSG_RESULT([ok (${host_os})])
         VGCONF_OS="openbsd"
+        DEFAULT_SUPP="$srcdir/openbsd.supp"
         ;;
 
      solaris2.11*)

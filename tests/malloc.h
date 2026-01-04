@@ -7,6 +7,9 @@
 #elif defined(VGO_freebsd)
 #  include <stdlib.h>
 #  include <malloc_np.h>
+#elif defined(VGO_openbsd)
+#  include <stdlib.h>
+//#  include <sys/mallloc.h>
 #else
 #  include <malloc.h>
 #endif

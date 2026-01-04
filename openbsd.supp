@@ -1,0 +1,39 @@
+{
+   OpenBSD exit
+   Memcheck:Value8
+   fun:_thread_finalize
+   fun:__cxa_finalize
+   fun:exit
+}
+
+{
+   OpenBSD vfprintf
+   Memcheck:Value8
+   fun:write
+   fun:__sflush
+   fun:__sfvwrite
+   fun:__sprint
+   fun:__vfprintf
+   fun:vfprintf
+}
+
+{
+   OpenBSD uselocale
+   Memcheck:Value8
+   fun:uselocale
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:_CurrentRuneLocale
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   fun:pthread_self
+}
+
+
