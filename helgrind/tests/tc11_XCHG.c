@@ -13,6 +13,8 @@
 #undef PLAT_amd64_darwin
 #undef PLAT_x86_freebsd
 #undef PLAT_amd64_freebsd
+#undef PLAT_x86_openbsd
+#undef PLAT_amd64_openbsd
 #undef PLAT_x86_linux
 #undef PLAT_amd64_linux
 #undef PLAT_ppc32_linux
@@ -31,6 +33,10 @@
 #  define PLAT_x86_freebsd 1
 #elif defined(__FreeBSD__) && defined(__amd64__)
 #  define PLAT_amd64_freebsd 1
+#elif defined(_OpenBSD__) && defined(__i386__)
+#  define PLAT_x86_openbsd 1
+#elif defined(__OpenBSD__) && defined(__amd64__)
+#  define PLAT_amd64_openbsd 1
 #elif defined(__linux__) && defined(__i386__)
 #  define PLAT_x86_linux 1
 #elif defined(__linux__) && defined(__x86_64__)
@@ -59,7 +65,8 @@
 #if defined(PLAT_amd64_linux) || defined(PLAT_x86_linux) \
     || defined(PLAT_amd64_darwin) || defined(PLAT_x86_darwin) \
     || defined(PLAT_amd64_solaris) || defined(PLAT_x86_solaris) \
-    || defined(PLAT_amd64_freebsd) || defined(PLAT_x86_freebsd)
+    || defined(PLAT_amd64_freebsd) || defined(PLAT_x86_freebsd) \
+    || defined(PLAT_amd64_openbsd) || defined(PLAT_x86_openbsd)
 #  define XCHG_M_R(_addr,_lval) \
      __asm__ __volatile__( \
         "xchgl %0, %1" \

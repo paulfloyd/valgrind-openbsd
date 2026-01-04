@@ -47,7 +47,9 @@ AM_CXXFLAGS += $(AM_FLAG_M3264_PRI)
 
 # C ones
 if !VGCONF_OS_IS_FREEBSD
+if !VGCONF_OS_IS_OPENBSD
 dlclose_LDADD		= -ldl
+endif
 endif
 if VGCONF_OS_IS_DARWIN
 myprint_so_LDFLAGS	= $(AM_CFLAGS) -dynamic -dynamiclib -all_load -fpic

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
-#if !defined(VGO_darwin)
+#if !defined(VGO_darwin) && !defined(VGO_openbsd)
 #include <malloc.h>
 #endif
 #include "../../config.h"
@@ -15,7 +15,7 @@ int main(void)
 
    (void)VALGRIND_MAKE_MEM_UNDEFINED(&size, sizeof(size));
    (void)VALGRIND_MAKE_MEM_UNDEFINED(&align, sizeof(align));
-#if !defined(VGO_darwin)
+#if !defined(VGO_darwin) && !defined(VGO_openbsd)
    p = memalign(align, size);
    free(p);
 #endif

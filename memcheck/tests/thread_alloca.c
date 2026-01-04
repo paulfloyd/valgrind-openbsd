@@ -7,7 +7,7 @@
    Also, a high nr of threads in thr[] is needed to get
    the problem. */
 #include <pthread.h>
-#if !defined(__FreeBSD__)
+#if !defined(__FreeBSD__) && !defined(__OpenBSD__)
 #include <alloca.h>
 #endif
 #include <assert.h>

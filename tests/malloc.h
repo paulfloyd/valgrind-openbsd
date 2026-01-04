@@ -21,7 +21,7 @@ __attribute__((unused))
 static void* memalign16(size_t szB)
 {
    void* x;
-#if defined(VGO_darwin) || defined(VGO_freebsd)
+#if defined(VGO_darwin) || defined(VGO_freebsd) || defined(VGO_openbsd)
    // Darwin lacks memalign, but its malloc is always 16-aligned anyway.
    posix_memalign((void **)&x, 16, szB);
 #else
@@ -37,7 +37,7 @@ __attribute__((unused))
 static void* memalign32(size_t szB)
 {
    void* x;
-#if defined(VGO_darwin) || defined(VGO_freebsd)
+#if defined(VGO_darwin) || defined(VGO_freebsd) || defined(VGO_openbsd)
    // Darwin lacks memalign
    posix_memalign((void **)&x, 32, szB);
 #else
@@ -53,7 +53,7 @@ __attribute__((unused))
 static void* memalign64(size_t szB)
 {
    void* x;
-#if defined(VGO_darwin) || defined(VGO_freebsd)
+#if defined(VGO_darwin) || defined(VGO_freebsd) || defined(VGO_openbsd)
    // Darwin lacks memalign
    posix_memalign((void **)&x, 64, szB);
 #else

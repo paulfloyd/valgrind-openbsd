@@ -533,7 +533,9 @@ condvar_SOURCES		    = condvar.cpp
 condvar_CXXFLAGS            = $(AM_CXXFLAGS) -std=c++0x
 concurrent_close_SOURCES    = concurrent_close.cpp
 if !VGCONF_OS_IS_FREEBSD
+if !VGCONF_OS_IS_OPENBSD
 dlopen_main_LDADD           = -ldl
+endif
 endif
 dlopen_lib_so_SOURCES       = dlopen_lib.c
 dlopen_lib_so_CFLAGS        = -fPIC

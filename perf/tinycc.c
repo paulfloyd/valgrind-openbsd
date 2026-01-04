@@ -54,7 +54,9 @@
 #endif
 #ifndef WIN32
 #include <sys/time.h>
+#if !defined(VGO_openbsd)
 #include <sys/ucontext.h>
+#endif
 #endif
 
 //#endif /* !CONFIG_TCCBOOT */
