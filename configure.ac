@@ -554,6 +554,11 @@ case "${host_os}" in
 	esac
         ;;
 
+     *openbsd*)
+        AC_MSG_RESULT([ok (${host_os})])
+        VGCONF_OS="openbsd"
+        ;;
+
      solaris2.11*)
         AC_MSG_RESULT([ok (${host_os})])
         VGCONF_OS="solaris"
@@ -802,6 +807,28 @@ case "$ARCH_MAX-$VGCONF_OS" in
         valt_load_address_sec_inner="0x28000000"
         AC_MSG_RESULT([ok (${ARCH_MAX}-${VGCONF_OS})])
         ;;
+     x86-openbsd)
+        VGCONF_ARCH_PRI="x86"
+        VGCONF_ARCH_SEC=""
+        VGCONF_PLATFORM_PRI_CAPS="X86_OPENBSD"
+        VGCONF_PLATFORM_SEC_CAPS=""
+        valt_load_address_pri_norml="0x38000000"
+        valt_load_address_pri_inner="0x28000000"
+        valt_load_address_sec_norml="0xUNSET"
+        valt_load_address_sec_inner="0xUNSET"
+        AC_MSG_RESULT([ok (${ARCH_MAX}-${VGCONF_OS})])
+        ;;
+     amd64-openbsd)
+        VGCONF_ARCH_PRI="amd64"
+        VGCONF_ARCH_SEC=""
+        VGCONF_PLATFORM_PRI_CAPS="AMD64_OPENBSD"
+        VGCONF_PLATFORM_SEC_CAPS=""
+        valt_load_address_pri_norml="0x38000000"
+        valt_load_address_pri_inner="0x28000000"
+        valt_load_address_sec_norml="0xUNSET"
+        valt_load_address_sec_inner="0xUNSET"
+        AC_MSG_RESULT([ok (${ARCH_MAX}-${VGCONF_OS})])
+        ;;
      # Darwin gets identified as 32-bit even when it supports 64-bit.
      # (Not sure why, possibly because 'uname' returns "i386"?)  Just about
      # all Macs support both 32-bit and 64-bit, so we just build both.  If
@@ -1004,6 +1031,8 @@ AM_CONDITIONAL(VGCONF_ARCHS_INCLUDE_X86,
                  -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_LINUX \
                  -o x$VGCONF_PLATFORM_PRI_CAPS = xX86_FREEBSD \
                  -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_FREEBSD \
+                 -o x$VGCONF_PLATFORM_PRI_CAPS = xX86_OPENBSD \
+                 -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_OPENBSD \
                  -o x$VGCONF_PLATFORM_PRI_CAPS = xX86_DARWIN \
                  -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_DARWIN \
                  -o x$VGCONF_PLATFORM_PRI_CAPS = xX86_SOLARIS \
@@ -1011,6 +1040,7 @@ AM_CONDITIONAL(VGCONF_ARCHS_INCLUDE_X86,
 AM_CONDITIONAL(VGCONF_ARCHS_INCLUDE_AMD64, 
                test x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_LINUX \
                  -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_FREEBSD \
+                 -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_OPENBSD \
                  -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_DARWIN \
                  -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_SOLARIS )
 AM_CONDITIONAL(VGCONF_ARCHS_INCLUDE_PPC32, 
@@ -1068,6 +1098,11 @@ AM_CONDITIONAL(VGCONF_PLATFORMS_INCLUDE_X86_FREEBSD,
                  -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_FREEBSD)
 AM_CONDITIONAL(VGCONF_PLATFORMS_INCLUDE_AMD64_FREEBSD, 
                test x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_FREEBSD)
+AM_CONDITIONAL(VGCONF_PLATFORMS_INCLUDE_X86_OPENBSD,
+               test x$VGCONF_PLATFORM_PRI_CAPS = xX86_OPENBSD \
+                 -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_OPENBSD)
+AM_CONDITIONAL(VGCONF_PLATFORMS_INCLUDE_AMD64_OPENBSD,
+               test x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_OPENBSD)
 AM_CONDITIONAL(VGCONF_PLATFORMS_INCLUDE_X86_DARWIN,
                test x$VGCONF_PLATFORM_PRI_CAPS = xX86_DARWIN \
                  -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_DARWIN)
@@ -1098,6 +1133,9 @@ AM_CONDITIONAL(VGCONF_OS_IS_LINUX,
 AM_CONDITIONAL(VGCONF_OS_IS_FREEBSD,
                test x$VGCONF_PLATFORM_PRI_CAPS = xX86_FREEBSD \
                  -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_FREEBSD)
+AM_CONDITIONAL(VGCONF_OS_IS_OPENBSD,
+               test x$VGCONF_PLATFORM_PRI_CAPS = xX86_OPENBSD \
+                 -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_OPENBSD)
 AM_CONDITIONAL(VGCONF_OS_IS_DARWIN,
                test x$VGCONF_PLATFORM_PRI_CAPS = xX86_DARWIN \
                  -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_DARWIN)
@@ -1236,6 +1274,14 @@ AC_EGREP_CPP([FREEBSD_LIBC], [
 ],
 GLIBC_VERSION="freebsd")
 
+AC_EGREP_CPP([OPENBSD_LIBC], [
+#include <sys/cdefs.h>
+#if defined(__OpenBSD__)
+  OPENBSD_LIBC
+#endif
+],
+GLIBC_VERSION="openbsd")
+
 # not really a version check
 AC_EGREP_CPP([BIONIC_LIBC], [
 #if defined(__ANDROID__)
@@ -1330,6 +1376,11 @@ case "${GLIBC_VERSION}" in
      freebsd)
 	AC_MSG_RESULT(FreeBSD)
 	AC_DEFINE([FREEBSD_LIBC], 1, [Define to 1 if you're using FreeBSD])
+	# DEFAULT_SUPP set by kernel version check above.
+	;;
+     openbsd)
+	AC_MSG_RESULT(OpenBSD)
+	AC_DEFINE([OPENBSD_LIBC], 1, [Define to 1 if you're using OpenBSD])
 	# DEFAULT_SUPP set by kernel version check above.
 	;;
      bionic)
@@ -4897,6 +4948,7 @@ AC_PATH_PROG([MPI_CC], [mpicc], [mpicc],
 mflag_primary=
 if test x$VGCONF_PLATFORM_PRI_CAPS = xX86_LINUX \
      -o x$VGCONF_PLATFORM_PRI_CAPS = xX86_FREEBSD \
+     -o x$VGCONF_PLATFORM_PRI_CAPS = xX86_OPENBSD \
      -o x$VGCONF_PLATFORM_PRI_CAPS = xPPC32_LINUX \
      -o x$VGCONF_PLATFORM_PRI_CAPS = xARM_LINUX \
      -o x$VGCONF_PLATFORM_PRI_CAPS = xMIPS32_LINUX \
@@ -4905,6 +4957,7 @@ if test x$VGCONF_PLATFORM_PRI_CAPS = xX86_LINUX \
   mflag_primary=$FLAG_M32
 elif test x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_LINUX \
        -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_FREEBSD \
+       -o x$VGCONF_PLATFORM_PRI_CAPS = xAMD64_OPENBSD \
        -o x$VGCONF_PLATFORM_PRI_CAPS = xPPC64_LINUX \
        -o x$VGCONF_PLATFORM_PRI_CAPS = xARM64_LINUX \
        -o x$VGCONF_PLATFORM_PRI_CAPS = xMIPS64_LINUX \
@@ -4921,7 +4974,8 @@ if test x$VGCONF_PLATFORM_SEC_CAPS = xX86_LINUX \
      -o x$VGCONF_PLATFORM_SEC_CAPS = xPPC32_LINUX \
      -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_SOLARIS \
      -o x$VGCONF_PLATFORM_SEC_CAPS = xMIPS32_LINUX \
-     -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_FREEBSD ; then
+     -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_FREEBSD \
+     -o x$VGCONF_PLATFORM_SEC_CAPS = xX86_OPENBSD ; then
   mflag_secondary=$FLAG_M32
 elif test x$VGCONF_PLATFORM_SEC_CAPS = xX86_DARWIN ; then
   mflag_secondary="$FLAG_M32 -arch i386"
@@ -4943,6 +4997,9 @@ AM_COND_IF([VGCONF_OS_IS_LINUX],
            [CFLAGS_MPI="-g -O -fno-omit-frame-pointer -Wall -fpic"
             LDFLAGS_MPI="-fpic -shared"])
 AM_COND_IF([VGCONF_OS_IS_FREEBSD],
+           [CFLAGS_MPI="-g -O -fno-omit-frame-pointer -Wall -fpic"
+            LDFLAGS_MPI="-fpic -shared"])
+AM_COND_IF([VGCONF_OS_IS_OPENBSD],
            [CFLAGS_MPI="-g -O -fno-omit-frame-pointer -Wall -fpic"
             LDFLAGS_MPI="-fpic -shared"])
 AM_COND_IF([VGCONF_OS_IS_DARWIN],
@@ -5468,6 +5525,8 @@ AC_CONFIG_FILES([coregrind/link_tool_exe_linux],
                 [chmod +x coregrind/link_tool_exe_linux])
 AC_CONFIG_FILES([coregrind/link_tool_exe_freebsd],
                 [chmod +x coregrind/link_tool_exe_freebsd])
+AC_CONFIG_FILES([coregrind/link_tool_exe_openbsd],
+                [chmod +x coregrind/link_tool_exe_openbsd])
 AC_CONFIG_FILES([coregrind/link_tool_exe_darwin],
                 [chmod +x coregrind/link_tool_exe_darwin])
 AC_CONFIG_FILES([coregrind/link_tool_exe_solaris],

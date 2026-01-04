@@ -145,6 +145,10 @@ SysRes VG_(am_do_mmap_NO_NOTIFY)( Addr start, SizeT length, UInt prot,
    SysRes res;
    aspacem_assert(VG_IS_PAGE_ALIGNED(offset));
 
+#  if defined(VGO_openbsd)
+   prot |= VKI_PROT_READ;
+#  endif
+
 #  if defined(VGP_arm64_linux)
    res = VG_(do_syscall6)(__NR3264_mmap, (UWord)start, length, 
                          prot, flags, fd, offset);
@@ -172,12 +176,12 @@ SysRes VG_(am_do_mmap_NO_NOTIFY)( Addr start, SizeT length, UInt prot,
    }
    res = VG_(do_syscall6)(__NR_mmap, (UWord)start, length,
                           prot, flags, (UInt)fd, offset);
-#  elif defined(VGP_x86_freebsd)
+#  elif defined(VGP_x86_freebsd) || defined(VGP_x86_openbsd)
    if (flags & VKI_MAP_ANONYMOUS && fd == 0)
       fd = -1;
    res = VG_(do_syscall7)(__NR_mmap, (UWord)start, length,
 			  prot, flags, fd, offset, offset >> 32ul);
-#  elif defined(VGP_amd64_freebsd)
+#  elif defined(VGP_amd64_freebsd) || defined(VGP_amd64_openbsd)
    if ((flags & VKI_MAP_ANONYMOUS) && fd == 0)
       fd = -1;
    res = VG_(do_syscall6)(__NR_mmap, (UWord)start, length,
@@ -205,6 +209,13 @@ SysRes local_do_mprotect_NO_NOTIFY(Addr start, SizeT length, UInt prot)
 {
    return VG_(do_syscall3)(__NR_mprotect, (UWord)start, length, prot );
 }
+
+#if defined(VGO_openbsd)
+SysRes VG_(am_do_mprotect_NO_NOTIFY)(Addr start, SizeT length, UInt prot)
+{
+   return VG_(do_syscall3)(__NR_mprotect, (UWord)start, length, prot );
+}
+#endif
 
 SysRes ML_(am_do_munmap_NO_NOTIFY)(Addr start, SizeT length)
 {
@@ -266,7 +277,7 @@ SysRes ML_(am_open) ( const HChar* pathname, Int flags, Int mode )
    /* ARM64 wants to use __NR_openat rather than __NR_open. */
    SysRes res = VG_(do_syscall4)(__NR_openat,
                                  VKI_AT_FDCWD, (UWord)pathname, flags, mode);
-#  elif defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_freebsd)
+#  elif defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_freebsd) || defined(VGO_openbsd)
    SysRes res = VG_(do_syscall3)(__NR_open, (UWord)pathname, flags, mode);
 #  elif defined(VGO_solaris)
    SysRes res = VG_(do_syscall4)(__NR_openat, VKI_AT_FDCWD, (UWord)pathname,
@@ -294,7 +305,7 @@ Int ML_(am_readlink)(const HChar* path, HChar* buf, UInt bufsiz)
 #  if defined(VGP_arm64_linux) || defined(VGP_nanomips_linux)
    res = VG_(do_syscall4)(__NR_readlinkat, VKI_AT_FDCWD,
                                            (UWord)path, (UWord)buf, bufsiz);
-#  elif defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_freebsd)
+#  elif defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_freebsd) || defined(VGO_openbsd)
    res = VG_(do_syscall3)(__NR_readlink, (UWord)path, (UWord)buf, bufsiz);
 #  elif defined(VGO_solaris)
    res = VG_(do_syscall4)(__NR_readlinkat, VKI_AT_FDCWD, (UWord)path,
@@ -307,7 +318,7 @@ Int ML_(am_readlink)(const HChar* path, HChar* buf, UInt bufsiz)
 
 Int ML_(am_fcntl) ( Int fd, Int cmd, Addr arg )
 {
-#  if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd)
+#  if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_openbsd)
 #  if defined(VGP_nanomips_linux)
    SysRes res = VG_(do_syscall3)(__NR_fcntl64, fd, cmd, arg);
 #  else
@@ -393,6 +404,16 @@ Bool ML_(am_get_fd_d_i_m)( Int fd,
    struct vki_stat buf;
    SysRes res = VG_(do_syscall2)(__NR_fstat, fd, (UWord)&buf);
 #endif
+   if (!sr_isError(res)) {
+      *dev  = (ULong)buf.st_dev;
+      *ino  = (ULong)buf.st_ino;
+      *mode = (UInt) buf.st_mode;
+      return True;
+   }
+   return False;
+#  elif defined(VGO_openbsd)
+   struct vki_stat buf;
+   SysRes res = VG_(do_syscall2)(__NR_fstat, fd, (UWord)&buf);
    if (!sr_isError(res)) {
       *dev  = (ULong)buf.st_dev;
       *ino  = (ULong)buf.st_ino;
@@ -492,6 +513,18 @@ Bool ML_(am_resolve_filename) ( Int fd, /*OUT*/HChar* buf, Int nbuf )
    else
       return False;
 
+#elif defined(VGO_openbsd)
+   char *VG_(pathname_by_fd)(Int fd);
+
+   HChar *p;
+
+   p = VG_(pathname_by_fd)(fd);
+   if (p) {
+      VG_(strncpy)(buf, p, nbuf);
+      return True;
+   }
+   return False;
+
 #  else
 #     error Unknown OS
 #  endif
@@ -529,7 +562,11 @@ VgStack* VG_(am_alloc_VgStack)( /*OUT*/Addr* initial_sp )
    szB = VG_STACK_GUARD_SZB 
          + VG_(clo_valgrind_stacksize) + VG_STACK_GUARD_SZB;
 
+#if defined(VGO_openbsd)
+   sres = VG_(am_mmap_anon_float_valgrind_stack)( szB );
+#else
    sres = VG_(am_mmap_anon_float_valgrind)( szB );
+#endif
    if (sr_isError(sres))
       return NULL;
 
@@ -608,6 +645,19 @@ Addr VG_(am_valgrind_stack_low_addr)( const VgStack* stack)
 {
    return (Addr)&stack->bytes[VG_STACK_GUARD_SZB];
 }
+
+#if defined(VGO_openbsd)
+Bool VG_(am_mprotect)(Addr start, SizeT length, UInt prot)
+{
+   SysRes   sres;
+
+   sres = local_do_mprotect_NO_NOTIFY(start, length, prot);
+   if (sr_isError(sres))
+      return False;
+   VG_(am_notify_mprotect)(start, length, prot);
+   return True;
+}
+#endif
 
 /*--------------------------------------------------------------------*/
 /*--- end                                                          ---*/

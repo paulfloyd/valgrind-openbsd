@@ -226,6 +226,10 @@ static inline void my_exit ( int x )
  STRRCHR(VG_Z_LD_ELF_SO_1,   strrchr)
  STRRCHR(VG_Z_LD_ELF32_SO_1, strrchr)
 
+#elif defined(VGO_openbsd)
+ STRRCHR(VG_Z_LIBC_SONAME,   strrchr)
+ STRRCHR(VG_Z_LIBC_SONAME,   rindex)
+
 #elif defined(VGO_darwin)
  //STRRCHR(VG_Z_LIBC_SONAME,   strrchr)
  //STRRCHR(VG_Z_LIBC_SONAME,   rindex)
@@ -283,6 +287,10 @@ static inline void my_exit ( int x )
  STRCHR(VG_Z_LD_ELF_SO_1,          strchr)
  STRCHR(VG_Z_LD_ELF32_SO_1,        strchr)
 
+#elif defined(VGO_openbsd)
+ STRCHR(VG_Z_LIBC_SONAME,          strchr)
+ STRCHR(VG_Z_LIBC_SONAME,          index)
+
 #elif defined(VGO_darwin)
  STRCHR(VG_Z_LIBC_SONAME, strchr)
 # if DARWIN_VERS == DARWIN_10_9
@@ -338,6 +346,9 @@ static inline void my_exit ( int x )
  STRCAT(VG_Z_LD_ELF_SO_1,   strcat)
  STRCAT(VG_Z_LD_ELF32_SO_1, strcat)
 
+#elif defined(VGO_openbsd)
+ STRCAT(VG_Z_LIBC_SONAME, strcat)
+
 #elif defined(VGO_darwin)
  //STRCAT(VG_Z_LIBC_SONAME, strcat)
 
@@ -379,6 +390,9 @@ static inline void my_exit ( int x )
  STRNCAT(VG_Z_LIBC_SONAME, strncat)
 
 #elif defined(VGO_freebsd)
+ STRNCAT(VG_Z_LIBC_SONAME, strncat)
+
+#elif defined(VGO_openbsd)
  STRNCAT(VG_Z_LIBC_SONAME, strncat)
 
 #elif defined(VGO_darwin)
@@ -435,6 +449,9 @@ static inline void my_exit ( int x )
  STRLCAT(VG_Z_LD_ELF_SO_1,   strlcat)
  STRLCAT(VG_Z_LIBC_SONAME,   strlcat)
  STRLCAT(VG_Z_LD_ELF32_SO_1, strlcat)
+
+#elif defined(VGO_openbsd)
+ STRLCAT(VG_Z_LD_ELF_SO_1, strlcat)
 
 #elif defined(VGO_darwin)
  //STRLCAT(VG_Z_LIBC_SONAME, strlcat)
@@ -516,6 +533,9 @@ static inline void my_exit ( int x )
  STRLEN(VG_Z_LD_ELF_SO_1,   strlen)
  STRLEN(VG_Z_LD_ELF32_SO_1, strlen)
 
+#elif defined(VGO_openbsd)
+ STRLEN(VG_Z_LIBC_SONAME, strlen)
+
 #elif defined(VGO_darwin)
  STRLEN(VG_Z_LIBC_SONAME, strlen)
 # if DARWIN_VERS >= DARWIN_10_9
@@ -565,6 +585,9 @@ static inline void my_exit ( int x )
  STRCPY(VG_Z_LD_ELF_SO_1,   strcpy)
  STRCPY(VG_Z_LD_ELF32_SO_1, strcpy)
 
+#elif defined(VGO_openbsd)
+ STRCPY(VG_Z_LIBC_SONAME, strcpy)
+
 #elif defined(VGO_darwin)
  STRCPY(VG_Z_LIBC_SONAME, strcpy)
 # if DARWIN_VERS == DARWIN_10_9
@@ -612,6 +635,9 @@ static inline void my_exit ( int x )
  STRNCPY(VG_Z_LIBC_SONAME,   strncpy)
  STRNCPY(VG_Z_LD_ELF_SO_1,   strncpy)
  STRNCPY(VG_Z_LD_ELF32_SO_1, strncpy)
+
+#elif defined(VGO_openbsd)
+ STRNCPY(VG_Z_LIBC_SONAME, strncpy)
 
 #elif defined(VGO_darwin)
  STRNCPY(VG_Z_LIBC_SONAME, strncpy)
@@ -671,6 +697,10 @@ static inline void my_exit ( int x )
  STRLCPY(VG_Z_LD_ELF32_SO_1, strlcpy)
  STRLCPY(VG_Z_LIBC_SONAME,   strlcpy)
 
+#elif defined(VGO_openbsd)
+ #define STRLCPY_CHECK_FOR_DSTSIZE_ZERO
+ STRLCPY(VG_Z_LD_ELF_SO_1, strlcpy)
+
 #elif defined(VGO_darwin)
  #define STRLCPY_CHECK_FOR_DSTSIZE_ZERO
  //STRLCPY(VG_Z_LIBC_SONAME, strlcpy)
@@ -724,6 +754,9 @@ static inline void my_exit ( int x )
  STRNCMP(VG_Z_LIBC_SONAME, strncmp)
  STRNCMP(VG_Z_LD_ELF_SO_1, strncmp)
  STRNCMP(VG_Z_LD_ELF32_SO_1, strncmp)
+
+#elif defined(VGO_openbsd)
+ STRNCMP(VG_Z_LIBC_SONAME, strncmp)
 
 #elif defined(VGO_darwin)
  STRNCMP(VG_Z_LIBC_SONAME,        strncmp)
@@ -952,6 +985,9 @@ static inline void my_exit ( int x )
  STRCMP(VG_Z_LD_ELF_SO_1, strcmp)
  STRCMP(VG_Z_LD_ELF32_SO_1, strcmp)
 
+#elif defined(VGO_openbsd)
+ STRCMP(VG_Z_LIBC_SONAME, strcmp)
+
 #elif defined(VGO_darwin)
  STRCMP(VG_Z_LIBC_SONAME, strcmp)
 # if DARWIN_VERS >= DARWIN_10_9
@@ -986,6 +1022,9 @@ static inline void my_exit ( int x )
  MEMCHR(VG_Z_LIBC_SONAME, __GI_memchr)
 
 #elif defined(VGO_freebsd)
+ MEMCHR(VG_Z_LIBC_SONAME, memchr)
+
+#elif defined(VGO_openbsd)
  MEMCHR(VG_Z_LIBC_SONAME, memchr)
 
 #elif defined(VGO_darwin)
@@ -1027,6 +1066,9 @@ static inline void my_exit ( int x )
  MEMRCHR(VG_Z_LIBC_SONAME, memrchr)
 
 #elif defined(VGO_freebsd)
+ MEMRCHR(VG_Z_LIBC_SONAME, memrchr)
+
+#elif defined(VGO_openbsd)
  MEMRCHR(VG_Z_LIBC_SONAME, memrchr)
 
 #elif defined(VGO_darwin)
@@ -1156,6 +1198,9 @@ static inline void my_exit ( int x )
  MEMCPY(VG_Z_LD_ELF_SO_1, memcpy)
  MEMCPY(VG_Z_LD_ELF32_SO_1, memcpy)
 
+#elif defined(VGO_openbsd)
+ MEMCPY(VG_Z_LIBC_SONAME,  memcpy)
+
 #elif defined(VGO_darwin)
 # if DARWIN_VERS <= DARWIN_10_6
   MEMCPY(VG_Z_LIBC_SONAME,  memcpy)
@@ -1225,6 +1270,10 @@ static inline void my_exit ( int x )
  MEMCMP(VG_Z_LIBC_SONAME,  memcmp)
  MEMCMP(VG_Z_LIBC_SONAME,  bcmp)
 
+#elif defined(VGO_openbsd)
+ MEMCMP(VG_Z_LIBC_SONAME,  memcmp)
+ MEMCMP(VG_Z_LIBC_SONAME,  bcmp)
+
 #elif defined(VGO_darwin)
 # if DARWIN_VERS >= DARWIN_10_9
   MEMCMP(libsystemZuplatformZddylib, _platform_memcmp)
@@ -1285,6 +1334,9 @@ static inline void my_exit ( int x )
  STPCPY(VG_Z_LD_ELF_SO_1,          stpcpy)
  STPCPY(VG_Z_LD_ELF32_SO_1,        stpcpy)
  STPCPY(VG_Z_LIBC_SONAME,          stpcpy)
+
+#elif defined(VGO_openbsd)
+ STPCPY(VG_Z_LD_ELF_SO_1, stpcpy)
 
 #elif defined(VGO_darwin)
  //STPCPY(VG_Z_LIBC_SONAME,          stpcpy)
@@ -1380,6 +1432,9 @@ static inline void my_exit ( int x )
  MEMSET(VG_Z_LD_ELF_SO_1,   memset)
  MEMSET(VG_Z_LD_ELF32_SO_1, memset)
 
+#elif defined(VGO_openbsd)
+ MEMSET(VG_Z_LIBC_SONAME, memset)
+
 #elif defined(VGO_darwin)
  //MEMSET(VG_Z_LIBC_SONAME, memset)
  //MEMSET(VG_Z_DYLD,        memset)
@@ -1408,6 +1463,9 @@ static inline void my_exit ( int x )
  MEMMOVE(VG_Z_LD_ELF_SO_1,   memmove)
  MEMMOVE(VG_Z_LD_ELF32_SO_1, memmove)
  MEMMOVE(VG_Z_LIBC_SONAME,   memmove)
+
+#elif defined(VGO_openbsd)
+ MEMMOVE(VG_Z_LD_ELF_SO_1, memmove)
 
 #elif defined(VGO_darwin)
 # if DARWIN_VERS <= DARWIN_10_6
@@ -1458,6 +1516,9 @@ static inline void my_exit ( int x )
  BCOPY(VG_Z_LIBC_SONAME,   bcopy)
  BCOPY(VG_Z_LD_ELF_SO_1,   bcopy)
  BCOPY(VG_Z_LD_ELF32_SO_1, bcopy)
+
+#elif defined(VGO_openbsd)
+ BCOPY(VG_Z_LIBC_SONAME, bcopy)
 
 #elif defined(VGO_darwin)
  //BCOPY(VG_Z_LIBC_SONAME, bcopy)

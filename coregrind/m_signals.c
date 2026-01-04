@@ -534,6 +534,22 @@ VgHashTable *ht_sigchld_ignore = NULL;
         (srP)->misc.X86.r_ebp = (uc)->uc_mcontext.ebp;   \
       }
 
+#elif defined(VGP_x86_openbsd)
+#  define VG_UCONTEXT_INSTR_PTR(uc)       ((UWord)(uc)->uc_mcontext.eip)
+#  define VG_UCONTEXT_STACK_PTR(uc)       ((UWord)(uc)->uc_mcontext.esp)
+#  define VG_UCONTEXT_FRAME_PTR(uc)       ((UWord)(uc)->uc_mcontext.ebp)
+#  define VG_UCONTEXT_SYSCALL_NUM(uc)     ((UWord)(uc)->uc_mcontext.eax)
+#  define VG_UCONTEXT_SYSCALL_SYSRES(uc)                        \
+      /* Convert the value in uc_mcontext.eax into a SysRes. */ \
+      VG_(mk_SysRes_x86_openbsd)( (uc)->uc_mcontext.eax, \
+	 (uc)->uc_mcontext.edx, ((uc)->uc_mcontext.eflags & 1) != 0 ? True : False)
+#  define VG_UCONTEXT_LINK_REG(uc)        0 /* What is an LR for anyway? */
+#  define VG_UCONTEXT_TO_UnwindStartRegs(srP, uc)        \
+      { (srP)->r_pc = (ULong)((uc)->uc_mcontext.eip);    \
+        (srP)->r_sp = (ULong)((uc)->uc_mcontext.esp);    \
+        (srP)->misc.X86.r_ebp = (uc)->uc_mcontext.ebp;   \
+      }
+
 #elif defined(VGP_amd64_freebsd)
 #  define VG_UCONTEXT_INSTR_PTR(uc)       ((uc)->uc_mcontext.rip)
 #  define VG_UCONTEXT_STACK_PTR(uc)       ((uc)->uc_mcontext.rsp)
@@ -549,6 +565,32 @@ VgHashTable *ht_sigchld_ignore = NULL;
         (srP)->r_sp = (uc)->uc_mcontext.rsp;             \
         (srP)->misc.AMD64.r_rbp = (uc)->uc_mcontext.rbp; \
       }
+
+#elif defined(VGP_amd64_openbsd)
+#  define VG_UCONTEXT_INSTR_PTR(uc)       ((uc)->uc_mcontext.rip)
+#  define VG_UCONTEXT_STACK_PTR(uc)       ((uc)->uc_mcontext.rsp)
+#  define VG_UCONTEXT_FRAME_PTR(uc)       ((uc)->uc_mcontext.rbp)
+#  define VG_UCONTEXT_SYSCALL_NUM(uc)     ((uc)->uc_mcontext.rax)
+#  define VG_UCONTEXT_SYSCALL_SYSRES(uc)                        \
+      /* Convert the value in uc_mcontext.rax into a SysRes. */ \
+      VG_(mk_SysRes_amd64_openbsd)( (uc)->uc_mcontext.rax, \
+	 (uc)->uc_mcontext.rdx, ((uc)->uc_mcontext.rflags & 1) != 0 ? True : False )
+#  define VG_UCONTEXT_LINK_REG(uc)        0 /* No LR on amd64 either */
+#  define VG_UCONTEXT_TO_UnwindStartRegs(srP, uc)        \
+      { (srP)->r_pc = (uc)->uc_mcontext.rip;             \
+        (srP)->r_sp = (uc)->uc_mcontext.rsp;             \
+        (srP)->misc.AMD64.r_rbp = (uc)->uc_mcontext.rbp; \
+      }
+#elif defined(VGP_mips32_linux)
+#  define VG_UCONTEXT_INSTR_PTR(uc)   ((UWord)(((uc)->uc_mcontext.sc_pc)))
+#  define VG_UCONTEXT_STACK_PTR(uc)   ((UWord)((uc)->uc_mcontext.sc_regs[29]))
+#  define VG_UCONTEXT_FRAME_PTR(uc)       ((uc)->uc_mcontext.sc_regs[30])
+#  define VG_UCONTEXT_SYSCALL_NUM(uc)     ((uc)->uc_mcontext.sc_regs[2])
+#  define VG_UCONTEXT_SYSCALL_SYSRES(uc)                         \
+      /* Convert the value in uc_mcontext.rax into a SysRes. */  \
+      VG_(mk_SysRes_mips32_linux)( (uc)->uc_mcontext.sc_regs[2], \
+                                   (uc)->uc_mcontext.sc_regs[3], \
+                                   (uc)->uc_mcontext.sc_regs[7])
 
 #elif defined(VGP_s390x_linux)
 
@@ -667,7 +709,8 @@ VgHashTable *ht_sigchld_ignore = NULL;
 #if defined(VGO_linux)
 #  define VKI_SIGINFO_si_addr  _sifields._sigfault._addr
 #  define VKI_SIGINFO_si_pid   _sifields._kill._pid
-#elif defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd)
+#elif defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd) \
+   || defined(VGO_openbsd)
 #  define VKI_SIGINFO_si_addr  si_addr
 #  define VKI_SIGINFO_si_pid   si_pid
 #else
@@ -1060,7 +1103,8 @@ extern void my_sigreturn(void);
    "my_sigreturn:\n" \
    "ud2\n" \
    ".previous\n"
-#elif defined(VGP_x86_freebsd) || defined(VGP_amd64_freebsd)
+#elif defined(VGP_x86_freebsd) || defined(VGP_amd64_freebsd) \
+   || defined(VGP_x86_openbsd) || defined(VGP_amd64_openbsd)
 /* Not used on FreeBSD */
 # define _MY_SIGRETURN(name) \
     ".text\n" \
@@ -1111,7 +1155,8 @@ static void handle_SCSS_change ( Bool force_update )
       ksa.sa_flags    = skss.skss_per_sig[sig].skss_flags;
 #     if !defined(VGP_ppc32_linux) && \
          !defined(VGP_x86_darwin) && !defined(VGP_amd64_darwin) && \
-         !defined(VGP_mips32_linux) && !defined(VGO_solaris) && !defined(VGO_freebsd)
+         !defined(VGP_mips32_linux) && !defined(VGO_solaris) && !defined(VGO_freebsd) && \
+	 !defined(VGO_openbsd)
       ksa.sa_restorer = my_sigreturn;
 #     endif
       /* Re above ifdef (also the assertion below), PaulM says:
@@ -1130,8 +1175,13 @@ static void handle_SCSS_change ( Bool force_update )
                    "mask(msb..lsb) 0x%llx 0x%llx\n",
                    sig, ksa.ksa_handler,
                    (UWord)ksa.sa_flags,
+#if !defined(VGO_openbsd)
                    _VKI_NSIG_WORDS > 1 ? (ULong)ksa.sa_mask.sig[1] : 0,
                    (ULong)ksa.sa_mask.sig[0]);
+#else
+                   (ULong)0,
+                   (ULong)ksa.sa_mask);
+#endif
 
       res = VG_(sigaction)( sig, &ksa, &ksa_old );
       vg_assert(res == 0);
@@ -1159,7 +1209,7 @@ static void handle_SCSS_change ( Bool force_update )
             !defined(VGP_x86_darwin) && !defined(VGP_amd64_darwin) && \
             !defined(VGP_mips32_linux) && !defined(VGP_mips64_linux) && \
             !defined(VGP_nanomips_linux) && !defined(VGO_solaris) && \
-            !defined(VGO_freebsd)
+            !defined(VGO_freebsd) && !defined(VGO_openbsd)
          vg_assert(ksa_old.sa_restorer == my_sigreturn);
 #        endif
          VG_(sigaddset)( &ksa_old.sa_mask, VKI_SIGKILL );
@@ -1280,7 +1330,7 @@ SysRes VG_(do_sys_sigaction) ( Int signo,
       old_act->sa_flags    = scss.scss_per_sig[signo].scss_flags;
       old_act->sa_mask     = scss.scss_per_sig[signo].scss_mask;
 #     if !defined(VGO_darwin) && !defined(VGO_freebsd) && \
-         !defined(VGO_solaris)
+         !defined(VGO_solaris) && !defined(VGO_openbsd)
       old_act->sa_restorer = scss.scss_per_sig[signo].scss_restorer;
 #     endif
    }
@@ -1293,7 +1343,7 @@ SysRes VG_(do_sys_sigaction) ( Int signo,
 
       scss.scss_per_sig[signo].scss_restorer = NULL;
 #     if !defined(VGO_darwin) && !defined(VGO_freebsd) && \
-         !defined(VGO_solaris)
+         !defined(VGO_solaris) && !defined(VGO_openbsd)
       scss.scss_per_sig[signo].scss_restorer = new_act->sa_restorer;
 #     endif
 
@@ -1362,11 +1412,16 @@ void do_sigprocmask_bitops ( Int vki_how,
 static
 HChar* format_sigset ( const vki_sigset_t* set )
 {
+#if !defined(VGO_openbsd)
    static HChar buf[_VKI_NSIG_WORDS * 16 + 1];
    int w;
+#else
+    static HChar buf[128];
+#endif
 
    VG_(strcpy)(buf, "");
 
+#if !defined(VGO_openbsd)
    for (w = _VKI_NSIG_WORDS - 1; w >= 0; w--)
    {
 #     if _VKI_NSIG_BPW == 32
@@ -1379,6 +1434,9 @@ HChar* format_sigset ( const vki_sigset_t* set )
 #       error "Unsupported value for _VKI_NSIG_BPW"
 #     endif
    }
+#else
+   VG_(sprintf)(buf + VG_(strlen)(buf), "%032x", *set);
+#endif
 
    return buf;
 }
@@ -1653,7 +1711,7 @@ void VG_(kill_self)(Int sigNo)
    sa.ksa_handler = VKI_SIG_DFL;
    sa.sa_flags = 0;
 #  if !defined(VGO_darwin) && !defined(VGO_freebsd) && \
-      !defined(VGO_solaris)
+      !defined(VGO_solaris) && !defined(VGO_openbsd)
    sa.sa_restorer = 0;
 #  endif
    VG_(sigemptyset)(&sa.sa_mask);
@@ -1699,6 +1757,12 @@ static Bool is_signal_from_kernel(ThreadId tid, int signum, int si_code)
     if (si_code == VKI_SI_USER || si_code == VKI_SI_LWP)
         return False;
 
+   // It looks like there's no reliable way to say where the signal came from
+   if (VG_(threads)[tid].status == VgTs_WaitSys) {
+      return False;
+   } else
+      return True;
+#  elif defined(VGO_openbsd)
    // It looks like there's no reliable way to say where the signal came from
    if (VG_(threads)[tid].status == VgTs_WaitSys) {
       return False;
@@ -2417,7 +2481,8 @@ static int sanitize_si_code(int si_code)
       mask them off) sign extends them when exporting to user space so
       we do the same thing here. */
    return (Short)si_code;
-#elif defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd)
+#elif defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd) \
+   || defined(VGO_openbsd)
    return si_code;
 #else
 #  error Unknown OS
@@ -3043,7 +3108,7 @@ void pp_ksigaction ( vki_sigaction_toK_t* sa )
                sa->ksa_handler, 
                (UInt)sa->sa_flags, 
 #              if !defined(VGO_darwin) && !defined(VGO_freebsd) && \
-                  !defined(VGO_solaris)
+                  !defined(VGO_solaris) && !defined(VGO_openbsd)
                   sa->sa_restorer
 #              else
                   (void*)0
@@ -3066,7 +3131,7 @@ void VG_(set_default_handler)(Int signo)
    sa.ksa_handler = VKI_SIG_DFL;
    sa.sa_flags = 0;
 #  if !defined(VGO_darwin) && !defined(VGO_freebsd) && \
-      !defined(VGO_solaris)
+      !defined(VGO_solaris) && !defined(VGO_openbsd)
    sa.sa_restorer = 0;
 #  endif
    VG_(sigemptyset)(&sa.sa_mask);
@@ -3188,7 +3253,7 @@ void VG_(sigstartup_actions) ( void )
 	 tsa.ksa_handler = (void *)sync_signalhandler;
 	 tsa.sa_flags = VKI_SA_SIGINFO;
 #        if !defined(VGO_darwin) && !defined(VGO_freebsd) && \
-            !defined(VGO_solaris)
+            !defined(VGO_solaris) && !defined(VGO_openbsd)
 	 tsa.sa_restorer = 0;
 #        endif
 	 VG_(sigfillset)(&tsa.sa_mask);
@@ -3216,7 +3281,7 @@ void VG_(sigstartup_actions) ( void )
 
       scss.scss_per_sig[i].scss_restorer = NULL;
 #     if !defined(VGO_darwin) && !defined(VGO_freebsd) && \
-         !defined(VGO_solaris)
+         !defined(VGO_solaris) && !defined(VGO_openbsd)
       scss.scss_per_sig[i].scss_restorer = sa.sa_restorer;
 #     endif
 

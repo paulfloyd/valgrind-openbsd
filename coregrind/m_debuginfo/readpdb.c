@@ -33,7 +33,7 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#if defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd)
+#if defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_openbsd)
 
 #include "pub_core_basics.h"
 #include "pub_core_debuginfo.h"
@@ -2605,7 +2605,7 @@ HChar* ML_(find_name_of_pdb_file)( const HChar* pename )
    return res;
 }
 
-#endif // defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd)
+#endif // defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_openbsd)
 
 /*--------------------------------------------------------------------*/
 /*--- end                                                          ---*/

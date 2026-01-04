@@ -876,6 +876,10 @@ void VG_(tt_tc_do_chaining) ( void* from__patch_addr,
    VG_(bzero_inline)(&archinfo_host, sizeof(archinfo_host));
    VG_(machine_get_VexArchInfo)( &arch_host, &archinfo_host );
    VexEndness endness_host = archinfo_host.endness;
+#if defined(VGO_openbsd)
+   UInt        len;
+   SysRes      sres;
+#endif
 
    // host_code is where we're patching to.  So it needs to
    // take into account, whether we're jumping to the slow
@@ -912,6 +916,18 @@ void VG_(tt_tc_do_chaining) ( void* from__patch_addr,
 
    TTEntryC* from_tteC = index_tteC(from_sNo, from_tteNo);
 
+#if defined(VGO_openbsd)
+   /* Protect the host code areas. */
+   len = (Long)sectors[to_sNo].tc_next - (Long)host_code;
+   sres = VG_(am_do_mprotect_NO_NOTIFY)(
+      (Addr)sectors[to_sNo].tc, 8 * tc_sector_szQ, VKI_PROT_READ | VKI_PROT_WRITE
+   );
+   if (sr_isError(sres)) {
+      VG_(printf)("valgrind: m_ume.c: mprotect failed\n");
+      vg_assert(0);
+   }
+#endif
+
    /* Get VEX to do the patching itself.  We have to hand it off
       since it is host-dependent. */
    VexInvalRange vir
@@ -924,6 +940,17 @@ void VG_(tt_tc_do_chaining) ( void* from__patch_addr,
            (void*)host_code
         );
    VG_(invalidate_icache)( (void*)vir.start, vir.len );
+
+#if defined(VGO_openbsd)
+   /* Protect the host code areas. */
+   sres = VG_(am_do_mprotect_NO_NOTIFY)(
+      (Addr)sectors[to_sNo].tc, 8 * tc_sector_szQ, VKI_PROT_READ | VKI_PROT_EXEC
+   );
+   if (sr_isError(sres)) {
+      VG_(printf)("valgrind: m_ume.c: mprotect failed\n");
+      vg_assert(0);
+   }
+#endif
 
    /* Now do the tricky bit -- update the ch_succs and ch_preds info
       for the two translations involved, so we can undo the chaining
@@ -1744,6 +1771,9 @@ void VG_(add_to_transtab)( const VexGuestExtents* vge,
    ULong  *tcptr, *tcptr2;
    UChar* srcP;
    UChar* dstP;
+#if defined(VGO_openbsd)
+   SysRes sres;
+#endif
 
    vg_assert(init_done);
    vg_assert(vge->n_used >= 1 && vge->n_used <= 3);
@@ -1818,11 +1848,33 @@ void VG_(add_to_transtab)( const VexGuestExtents* vge,
    vg_assert(tcptr >= &sectors[y].tc[0]);
    vg_assert(tcptr <= &sectors[y].tc[tc_sector_szQ]);
 
+#if defined(VGO_openbsd)
+   /* Protect the host code areas. */
+   sres = VG_(am_do_mprotect_NO_NOTIFY)(
+      (Addr)sectors[y].tc, 8 * tc_sector_szQ, VKI_PROT_READ | VKI_PROT_WRITE
+   );
+   if (sr_isError(sres)) {
+      VG_(printf)("valgrind: m_ume.c: mprotect failed\n");
+      vg_assert(0);
+   }
+#endif
+
    dstP = (UChar*)tcptr;
    srcP = (UChar*)code;
    VG_(memcpy)(dstP, srcP, code_len);
    sectors[y].tc_next += reqdQ;
    sectors[y].tt_n_inuse++;
+
+#if defined(VGO_openbsd)
+   /* Protect the host code areas. */
+   sres = VG_(am_do_mprotect_NO_NOTIFY)(
+      (Addr)sectors[y].tc, 8 * tc_sector_szQ, VKI_PROT_READ | VKI_PROT_EXEC
+   );
+   if (sr_isError(sres)) {
+      VG_(printf)("valgrind: m_ume.c: mprotect failed\n");
+      vg_assert(0);
+   }
+#endif
 
    /* more paranoia */
    tcptr2 = sectors[y].tc_next;

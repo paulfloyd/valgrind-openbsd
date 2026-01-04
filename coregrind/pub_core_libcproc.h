@@ -85,7 +85,7 @@ extern void VG_(do_atfork_pre)    ( ThreadId tid );
 extern void VG_(do_atfork_parent) ( ThreadId tid );
 extern void VG_(do_atfork_child)  ( ThreadId tid );
 
-#if defined(VGO_freebsd)
+#if defined(VGO_freebsd) || defined(VGO_openbsd)
 // sysctlbyname, getosreldate, is32on64
 extern Int VG_(sysctlbyname)(const HChar *name, void *oldp, SizeT *oldlenp, const void *newp, SizeT newlen);
 extern Int VG_(getosreldate)(void);

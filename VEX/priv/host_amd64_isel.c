@@ -1458,6 +1458,22 @@ static HReg iselIntExpr_R_wrk ( ISelEnv* env, const IRExpr* e )
          return dstI;
       }
 
+#if defined(VGO_openbsd)
+      if (e->Iex.Binop.op == Iop_MovFromSeg64) {
+         HReg dst = iselIntExpr_R(env, e->Iex.Binop.arg1);
+         HReg off = iselIntExpr_R(env, e->Iex.Binop.arg2);
+         addInstr(env, AMD64Instr_MovFromSeg64(off, dst));
+         return dst;
+      }
+
+      if (e->Iex.Binop.op == Iop_MovToSeg64) {
+         HReg src = iselIntExpr_R(env, e->Iex.Binop.arg1);
+         HReg off = iselIntExpr_R(env, e->Iex.Binop.arg2);
+         addInstr(env, AMD64Instr_MovToSeg64(src, off));
+         return src;
+      }
+#endif
+
       break;
    }
 

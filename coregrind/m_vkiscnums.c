@@ -67,7 +67,7 @@ STATIC_ASSERT(__NR_pipe2 == 5287);
 #endif
 
 //---------------------------------------------------------------------------
-#elif defined(VGO_freebsd)
+#elif defined(VGO_freebsd) || defined(VGO_openbsd)
 //---------------------------------------------------------------------------
 
 const HChar* VG_(sysnum_string)(Word sysnum)
