@@ -1665,7 +1665,8 @@ typedef
 /* ---------------- amd64-{linux,darwin,solaris} --------------- */
 
 #if defined(PLAT_amd64_linux)  ||  defined(PLAT_amd64_darwin) \
-    ||  defined(PLAT_amd64_solaris)  ||  defined(PLAT_amd64_freebsd)
+    ||  defined(PLAT_amd64_solaris)  ||  defined(PLAT_amd64_freebsd) \
+    ||  defined(PLAT_amd64_openbsd)
 
 /* ARGREGS: rdi rsi rdx rcx r8 r9 (the rest on stack in R-to-L order) */
 
