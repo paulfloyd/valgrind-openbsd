@@ -110,7 +110,7 @@ typedef
       Bool    hasT;     // True --> translations have (or MAY have)
                         // been taken from this segment
       Bool    isCH;     // True --> is client heap (SkAnonC ONLY)
-#if defined(VGO_freebsd)
+#if defined(VGO_freebsd) || defined(VGO_openbsd)
       Bool    isFF;     // True --> is a fixed file mapping
 #endif
    }

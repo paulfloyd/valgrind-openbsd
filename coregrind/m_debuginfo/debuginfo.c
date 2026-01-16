@@ -1125,12 +1125,15 @@ static ULong di_notify_ACHIEVE_ACCEPT_STATE ( struct _DebugInfo* di )
 ULong VG_(di_notify_mmap)( Addr a, Bool allow_SkFileV, Int use_fd )
 {
    NSegment const * seg;
-   Int rw_load_count;
+   Int expected_rw_load_count;
    const HChar* filename;
    Bool       is_rx_map, is_rw_map, is_ro_map;
 
    DebugInfo* di;
    Int        actual_fd, oflags;
+#if defined(VGO_freebsd) || defined(VGO_openbsd)
+   static Bool first_fixed_file = True;
+#endif
 #if defined(VGO_darwin)
    SysRes     preadres;
    HChar      buf1k[1024];
@@ -1295,10 +1298,19 @@ ULong VG_(di_notify_mmap)( Addr a, Bool allow_SkFileV, Int use_fd )
    if (!(is_rx_map || is_rw_map || is_ro_map))
       return 0;
 
-#if defined(VGO_freebsd)
+#if defined(VGO_freebsd) || defined(VGO_openbsd)
    /* Ignore non-fixed read-only mappings.  The dynamic linker may be
     * mapping something for its own transient purposes. */
-   if (!seg->isFF && is_ro_map)
+   if (!seg->isFF && is_ro_map) {
+      if (first_fixed_file) {
+         if (debug) {
+            VG_(dmsg)("di_notify_mmap-4: first non-fixed ro map\n");
+         }
+         first_fixed_file = False;
+      } else {
+         if (debug) {
+            VG_(dmsg)("di_notify_mmap-5: not first non-fixed ro map, ignored\n");
+         }
       return 0;
 #endif
 
@@ -1354,7 +1366,7 @@ ULong VG_(di_notify_mmap)( Addr a, Bool allow_SkFileV, Int use_fd )
 
    rw_load_count = 0;
 
-   elf_ok = ML_(check_elf_and_get_rw_loads) ( actual_fd, filename, &rw_load_count );
+   elf_ok = ML_(check_elf_and_get_rw_loads) ( actual_fd, filename, &expected_rw_load_count );
 
    if (use_fd == -1) {
       VG_(close)( actual_fd );
