@@ -1311,7 +1311,9 @@ ULong VG_(di_notify_mmap)( Addr a, Bool allow_SkFileV, Int use_fd )
          if (debug) {
             VG_(dmsg)("di_notify_mmap-5: not first non-fixed ro map, ignored\n");
          }
-      return 0;
+         return 0;
+      }
+   }
 #endif
 
 #if defined(VGO_darwin)
@@ -1364,7 +1366,7 @@ ULong VG_(di_notify_mmap)( Addr a, Bool allow_SkFileV, Int use_fd )
    /* We're only interested in mappings of object files. */
 #  if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_openbsd)
 
-   rw_load_count = 0;
+   expected_rw_load_count = 0;
 
    elf_ok = ML_(check_elf_and_get_rw_loads) ( actual_fd, filename, &expected_rw_load_count );
 
@@ -1379,7 +1381,7 @@ ULong VG_(di_notify_mmap)( Addr a, Bool allow_SkFileV, Int use_fd )
 #  elif defined(VGO_darwin)
    if (!ML_(is_macho_object_file)( buf1k, (SizeT)sr_Res(preadres) ))
       return 0;
-   rw_load_count = 1;
+   expected_rw_load_count = 1;
 #  else
 #    error "unknown OS"
 #  endif
@@ -1439,8 +1441,8 @@ ULong VG_(di_notify_mmap)( Addr a, Bool allow_SkFileV, Int use_fd )
    /* So, finally, are we in an accept state? */
    vg_assert(!di->have_dinfo);
    if (di->fsm.have_rx_map &&
-       rw_load_count >= 1 &&
-       di->fsm.rw_map_count == rw_load_count) {
+       expected_rw_load_count >= 1 &&
+       di->fsm.rw_map_count == expected_rw_load_count) {
       /* Ok, so, finally, we found what we need, and we haven't
          already read debuginfo for this object.  So let's do so now.
          Yee-ha! */

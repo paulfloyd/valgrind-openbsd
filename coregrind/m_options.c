@@ -181,7 +181,11 @@ Bool   VG_(clo_read_var_info)  = False;
 XArray *VG_(clo_req_tsyms);  // array of strings
 Bool   VG_(clo_run_libc_freeres) = True;
 Bool   VG_(clo_run_cxx_freeres) = True;
+#if defined(VGO_openbsd)
+UInt   VG_(clo_track_fds)      = 1;
+#else
 UInt   VG_(clo_track_fds)      = 0;
+#endif
 Bool   VG_(clo_show_below_main)= False;
 Bool   VG_(clo_keep_debuginfo) = False;
 Bool   VG_(clo_show_emwarns)   = False;

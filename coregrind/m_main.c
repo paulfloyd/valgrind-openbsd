@@ -516,6 +516,9 @@ static void process_option (Clo_Mode mode,
    else if VG_STREQ_CLOM(cloD, arg, "-d") // pre-early + Dynamic
       VG_(debugLog_startup) (VG_(debugLog_getLevel)() + 1,
                              "dynamic option change");
+   else if VG_STREQ_CLOM(cloD, arg, "-e") // pre-early + Dynamic
+      VG_(debugLog_startup) (VG_(debugLog_getLevel)() + 1,
+                             "dynamic option change");
    else if VG_STREQN_CLOM(0, 15, arg, "--profile-heap=")      {} // pre-early
    else if VG_STREQN_CLOM(0, 20, arg, "--core-redzone-size=") {} // pre-early
    else if VG_STREQN_CLOM(0, 15, arg, "--redzone-size=")      {} // pre-early
@@ -1325,6 +1328,14 @@ Int valgrind_main ( Int argc, HChar **argv, HChar **envp )
       if (argv[i][0] != '-') break;
       if VG_STREQ(argv[i], "--") break;
       if VG_STREQ(argv[i], "-d") loglevel++;
+      // FIXME PJF
+      // It looks like even OpenBSD 7.4 has some form of pinsyscalls.
+      // That effects the valgrind launcher. The launcher resuses the
+      // debug log code which makes direct syscalls. That fails on
+      // OpenBSD 7.4, which means that we can't get debug logs from
+      // the tool either (-d affects both launcher and tool).
+      // As a bodge use -e just in the tool.
+      if VG_STREQ(argv[i], "-e") loglevel++;
       if VG_BOOL_CLOM(cloE, argv[i], "--profile-heap", VG_(clo_profile_heap)) {}
       if VG_BINT_CLOM(cloE, argv[i], "--core-redzone-size", VG_(clo_core_redzone_size),
                      0, MAX_CLO_REDZONE_SZB) {}
