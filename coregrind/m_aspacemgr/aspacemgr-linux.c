@@ -1550,8 +1550,7 @@ static void read_maps_callback ( Addr addr, SizeT len, UInt prot,
    if (filename || (dev != 0 && ino != 0)) 
       seg.kind = SkFileV;
 
-// FIXME PJF OpenBSD has problems with filenames, but not dev and ino)
-#  if defined(VGO_darwin) || defined(VGO_openbsd)
+#  if defined(VGO_darwin)
    // GrP fixme no dev/ino on darwin
    if (offset != 0) 
       seg.kind = SkFileV;
