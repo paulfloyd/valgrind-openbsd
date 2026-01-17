@@ -685,7 +685,6 @@ static Bool maybe_merge_nsegments ( NSegment* s1, const NSegment* s2 )
          break;
 
       case SkFileC: case SkFileV:
-#if !defined(VGO_openbsd)
          if (s1->hasR == s2->hasR 
              && s1->hasW == s2->hasW && s1->hasX == s2->hasX
              && s1->dev == s2->dev && s1->ino == s2->ino
@@ -696,25 +695,6 @@ static Bool maybe_merge_nsegments ( NSegment* s1, const NSegment* s2 )
             ML_(am_dec_refcount)(s1->fnIdx);
             return True;
          }
-         // The following is an excerpt from `readelf -l a.out'.
-         //
-         // LOAD    0x0000000000000e20 0x0000000000002e20 0x0000000000002e20
-         //         0x00000000000001e0 0x00000000000001e0  RW     1000
-         // LOAD    0x0000000000001000 0x0000000000003000 0x0000000000003000
-         //         0x0000000000000000 0x0000000000000055  RW     1000
-         //
-         // The above two areas are determined to be contiguous area in the
-         // above `if' statement, and they are merged by preen_nsegments().
-         // Then, di->fsm.rw_map_count in the following `if' statement in
-         // VG_(di_notify_mmap)() would be 1, which does not match
-         // rw_load_count, and di_notify_ACHIEVE_ACCEPT_STATE() is not called.
-         // In the above program header, rw_load_count is 2.
-         //
-         //   if (di->fsm.have_rx_map &&
-         //       rw_load_count >= 1 &&
-         //       di->fsm.rw_map_count == rw_load_count) {
-         //      return di_notify_ACHIEVE_ACCEPT_STATE ( di );
-#endif
          break;
 
       case SkShmC:
@@ -1570,6 +1550,7 @@ static void read_maps_callback ( Addr addr, SizeT len, UInt prot,
    if (filename || (dev != 0 && ino != 0)) 
       seg.kind = SkFileV;
 
+// FIXME PJF OpenBSD has problems with filenames, but not dev and ino)
 #  if defined(VGO_darwin) || defined(VGO_openbsd)
    // GrP fixme no dev/ino on darwin
    if (offset != 0) 
@@ -3974,7 +3955,9 @@ Bool VG_(get_changed_segments)(
 /* Size of a smallish table used to read /proc/self/map entries. */
  #define M_PROCMAP_BUF 10485760	/* 10M */
 #else
+// FIXME PJF this is nowhere near big enough for large complex exes
  #define M_PROCMAP_BUF (sizeof(struct vki_kinfo_vmentry) * 64/* XXX */)
+extern HChar* VG_(tool_filename);
 #endif
 
 /* static ... to keep it out of the stack frame. */
@@ -4060,7 +4043,7 @@ static void parse_procselfmaps (
     len = rounddown(M_PROCMAP_BUF, sizeof(struct vki_kinfo_vmentry));
     res = VG_(sysctl)(mib, 3, procmap_buf, &len, NULL, 0);
     if (res) {
-       VG_(debugLog)(0, "procselfmaps", "sysctll %ld\n", res);
+       VG_(debugLog)(0, "procselfmaps", "sysctl %ld\n", res);
        ML_(am_exit)(1);
     }
 
@@ -4085,10 +4068,12 @@ static void parse_procselfmaps (
        if (record_gap && gapStart < start)
           (*record_gap) ( gapStart, start-gapStart );
 
+       // FIXME PJF OpenBSD can't get the filename from the mmap
+       // normally only the tool is mmap
        if (record_mapping && start < endPlusOne)
           (*record_mapping) ( start, endPlusOne-start,
                               prot, dev, ino,
-                              foffset, NULL );
+                              foffset, VG_(tool_filename) );
        gapStart = endPlusOne;
        p += sizeof(*kve);
     }

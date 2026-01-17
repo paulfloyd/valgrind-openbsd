@@ -1279,6 +1279,9 @@ setup_static_tib(void)
 }
 #endif
 
+// FIXME PJF OpenBSD workaround, needs cleaning up
+HChar* VG_(tool_filename) = NULL;
+
 /* By the time we get to valgrind_main, the_iicii should already have
    been filled in with any important details as required by whatever
    OS we have been built for.
@@ -1290,6 +1293,8 @@ Int valgrind_main ( Int argc, HChar **argv, HChar **envp )
    ThreadId tid_main          = VG_INVALID_THREADID;
    Int     loglevel, i;
    XArray* addr2dihandle = NULL;
+
+   VG_(tool_filename) = argv[0];
 
    //============================================================
    //

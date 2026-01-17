@@ -334,6 +334,8 @@ int main(int argc, char** argv, char** envp)
 
    VG_(debugLog)(1, "launcher", "launching %s\n", toolfile);
 
+   argv[0] = toolfile;
+
    execve(toolfile, argv, new_env);
 
    fprintf(stderr, "valgrind: failed to start tool '%s' for platform '%s': %s\n",
