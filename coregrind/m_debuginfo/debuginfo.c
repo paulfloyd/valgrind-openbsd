@@ -1169,6 +1169,10 @@ ULong VG_(di_notify_mmap)( Addr a, Bool allow_SkFileV, Int use_fd )
            || (seg->kind == SkFileV && allow_SkFileV)) )
       return 0;
 
+   // FIXMME PJF is there any way that we can continue
+   // when use_fd is something other than -1?
+   // we also use filename with stat()
+   // and there are asserts that it is not NULL
    /* If the file doesn't have a name, we're hosed.  Give up. */
    filename = VG_(am_get_filename)( seg );
    if (!filename)

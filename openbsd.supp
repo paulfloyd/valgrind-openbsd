@@ -18,6 +18,17 @@
 }
 
 {
+   openBSD write on exit
+   Memcheck:Value8
+   fun:write
+   fun:__sflush
+   fun:_fwalk
+   fun:__cxa_finalize
+   fun:exit
+}
+
+
+{
    OpenBSD uselocale
    Memcheck:Value8
    fun:uselocale

@@ -30,4 +30,7 @@ sed "/warning: L4 cache found, using its data for the LL simulation./d" |
 sed "/Warning: Cannot auto-detect cache config, using defaults./d" |
 sed "/Run with -v to see./d" |
 sed "/warning: specified LL cache: line_size .*$/d" |
-sed "/warning: simulated LL cache: line_size .*$/d"
+sed "/warning: simulated LL cache: line_size .*$/d" |
+# FIXME PJF hack because OpenBSD has no way to get filename from fds
+sed '/FILE DESCRIPTORS/{N;d;}'
+

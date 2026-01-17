@@ -24,4 +24,8 @@ sed "/^  \// d" |                # This is pretty feeble, but I don't see
 sed "/^The text at the bottom/ d" |
 
 # and remove any blank lines in the output
-sed "/^[[:space:]]*$/d"
+sed "/^[[:space:]]*$/d" |
+
+# FIXME PJF hack because OpenBSD has no way to get filename from fds
+sed '/FILE DESCRIPTORS/d'
+

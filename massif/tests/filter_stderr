@@ -11,6 +11,10 @@ sed "/^Massif, a heap profiler/ , /./ d" |
 perl -n -e 'print if !/^Massif:   (malloc|calloc|realloc|memalign)_common$/' |
 
 # Remove Darwin-only alloc-fns
-perl -n -e 'print if !/^Massif:   malloc_zone_(malloc|calloc|realloc|memalign|valloc)$/'
+perl -n -e 'print if !/^Massif:   malloc_zone_(malloc|calloc|realloc|memalign|valloc)$/' |
+
+# FIXME PJF hack because OpenBSD has no way to get filename from fds
+sed '/FILE DESCRIPTORS/{N;d;}'
+
 
 

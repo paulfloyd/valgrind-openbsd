@@ -7,6 +7,9 @@ $dir/../../tests/filter_stderr_basic |
 # Remove "Nulgrind, ..." line and the following copyright line.
 sed "/^Nulgrind, the minimal Valgrind tool/ , /./ d" |
 
+# FIXME PJF hack because OpenBSD has no way to get filename from fds
+sed '/FILE DESCRIPTORS/{N;d;}' |
+
 # Anonymise addresses
 $dir/../../tests/filter_addresses
 
