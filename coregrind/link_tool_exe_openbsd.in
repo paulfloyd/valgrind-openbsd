@@ -75,7 +75,11 @@ my $cc = $ARGV[1];
 # launch memcheck-amd64-openbsd, an Abort trap occurs in the execvp() system
 # call.
 #my $cmd = join(" ", @ARGV, "-static -Wl,@FLAG_T_TEXT@=$ala");
-my $cmd = sprintf "$cc -static -nopie -Wl,--strip-all -Wl,-Ttext=0x%x", hex($ala) + 0x1000;
+# PJF oh fuck some idiot put -Wl,--strip-all here
+# No wonder I couldn't debug Valgrind. Or get any stacktraces.
+# Just in case some other idiot wants to make the same stupid mistake
+# make sure that you have read README_PACKAGERS first.
+my $cmd = sprintf "$cc -static -nopie -Wl,-Ttext=0x%x", hex($ala) + 0x1000;
 
 # Add the rest of the parameters
 foreach my $n (2 .. $#ARGV) {
