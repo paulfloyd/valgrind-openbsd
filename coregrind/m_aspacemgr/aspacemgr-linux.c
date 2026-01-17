@@ -4072,7 +4072,7 @@ static void parse_procselfmaps (
        if (record_mapping && start < endPlusOne)
           (*record_mapping) ( start, endPlusOne-start,
                               prot, dev, ino,
-                              foffset, VG_(tool_filename) );
+                              foffset, foffset ? VG_(tool_filename) : NULL );
        gapStart = endPlusOne;
        p += sizeof(*kve);
     }
